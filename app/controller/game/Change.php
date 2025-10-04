@@ -17,11 +17,14 @@ class Change extends Base
             
             $params = $this->request->param();
             $log_id = intval($params['log_id'] ?? 0);
-            $change_money = floatval($params['change_money'] ?? 0);
-            $remark = $params['remark'] ?? '';
+            $status = $params['status'] ?? '';  // 'win' 或 'lose'
             
             if (empty($log_id)) {
                 return json(['code' => 0, 'msg' => '请选择要修改的记录']);
+            }
+            
+            if (!in_array($status, ['win', 'lose'])) {
+                return json(['code' => 0, 'msg' => '状态参数错误']);
             }
             
             // 获取游戏记录
@@ -49,39 +52,77 @@ class Change extends Base
             $money_before = $game_log['money'];
             $money_after_before = $game_log['money_after'];
             
-            // 计算新的金额
-            $new_money = $money_before + $change_money;
-            $new_money_after = $money_after_before + $change_money;
+            // 判断当前状态
+            $current_status = $money_before > 0 ? 'win' : 'lose';
+            
+            // 如果状态相同，不需要修改
+            if ($current_status == $status) {
+                return json(['code' => 0, 'msg' => '状态未改变']);
+            }
+            
+            // 计算新的金额（反转正负）
+            $new_money = -$money_before;
+            
+            // 计算金额差值
+            $money_diff = $new_money - $money_before;
+            
+            // 计算新的余额
+            $new_money_after = $money_after_before + $money_diff;
             
             // 开启事务
             Db::startTrans();
             
-            // 更新游戏记录
+            // 1. 更新当前游戏记录
             Db::connect('zonghepan')
                 ->name('game_user_money_logs')
                 ->where('id', $log_id)
                 ->update([
                     'money' => $new_money,
-                    'money_after' => $new_money_after,
-                    'remark' => $game_log['remark'] . ' [调整:' . $change_money . ']'
+                    'money_after' => $new_money_after
                 ]);
             
-            // 记录修改日志
+            // 2. 更新后续所有记录的money_after
+            $subsequent_logs = Db::connect('zonghepan')
+                ->name('game_user_money_logs')
+                ->where('member_id', $game_log['member_id'])
+                ->where('id', '>', $log_id)
+                ->select();
+            
+            $final_balance = $new_money_after;
+            foreach ($subsequent_logs as $log) {
+                $updated_balance = $log['money_after'] + $money_diff;
+                
+                Db::connect('zonghepan')
+                    ->name('game_user_money_logs')
+                    ->where('id', $log['id'])
+                    ->update(['money_after' => $updated_balance]);
+                
+                $final_balance = $updated_balance;
+            }
+            
+            // 3. 更新用户当前余额
+            Db::connect('zonghepan')
+                ->name('common_user')
+                ->where('id', $game_log['member_id'])
+                ->update(['money' => $final_balance]);
+            
+            // 4. 记录修改日志到本地数据库
             Db::name('change_log')->insert([
                 'admin_uid' => self::$user['id'],
                 'change_user_name' => $user['name'],
                 'money_before' => $money_before,
                 'money_end' => $new_money,
-                'money_change' => $change_money,
-                'change_log' => '修改记录ID' . $log_id . ',' . $remark
+                'money_change' => $money_diff,
+                'change_log' => '修改记录ID:' . $log_id . ',状态:' . $current_status . '->' . $status,
+                'created_at' => date('Y-m-d H:i:s')
             ]);
             
             Db::commit();
             
-            LogHelper::info('修改游戏记录', [
+            LogHelper::info('修改游戏记录状态', [
                 'admin_id' => self::$user['id'],
                 'log_id' => $log_id,
-                'change_money' => $change_money
+                'status_change' => $current_status . '->' . $status
             ]);
             
             return json([
@@ -90,8 +131,7 @@ class Change extends Base
                 'data' => [
                     'log_id' => $log_id,
                     'money_before' => $money_before,
-                    'money_after' => $new_money,
-                    'change_money' => $change_money
+                    'money_after' => $new_money
                 ]
             ]);
             
