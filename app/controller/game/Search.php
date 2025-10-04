@@ -15,11 +15,12 @@ class Search extends Base
                 return json(['code' => 0, 'msg' => '请先登录']);
             }
             
-            $username = input('post.username', '');
-            $start_date = input('post.start_date', '');
-            $end_date = input('post.end_date', '');
-            $page = input('post.page', 1, 'intval');
-            $limit = input('post.limit', 20, 'intval');
+            $params = $this->request->param();
+            $username = $params['username'] ?? '';
+            $start_date = $params['start_date'] ?? '';
+            $end_date = $params['end_date'] ?? '';
+            $page = intval($params['page'] ?? 1);
+            $limit = intval($params['limit'] ?? 20);
             
             if (empty($username)) {
                 return json(['code' => 0, 'msg' => '请输入要查询的用户名']);

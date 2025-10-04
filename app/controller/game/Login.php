@@ -3,14 +3,16 @@ namespace app\controller\game;
 
 use app\controller\common\LogHelper;
 use think\facade\Db;
+use app\BaseController;
 
-class Login
+class Login extends BaseController
 {
     public function login()
     {
         try {
-            $username = input('post.username', '');
-            $password = input('post.password', '');
+            $params = $this->request->param();
+            $username = $params['username'] ?? '';
+            $password = $params['password'] ?? '';
             
             if (empty($username) || empty($password)) {
                 return json(['code' => 0, 'msg' => '用户名或密码不能为空']);
@@ -40,7 +42,7 @@ class Login
                 'token' => $token,
                 'user_id' => $user['id'],
                 'create_time' => date('Y-m-d H:i:s'),
-                'ip' => request()->ip()
+                'ip' => $this->request->ip()
             ]);
             
             LogHelper::info('登录成功', ['username' => $username, 'user_id' => $user['id']]);

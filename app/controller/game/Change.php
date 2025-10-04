@@ -15,9 +15,10 @@ class Change extends Base
                 return json(['code' => 0, 'msg' => '请先登录']);
             }
             
-            $log_id = input('post.log_id', 0, 'intval');
-            $change_money = input('post.change_money', 0, 'floatval');
-            $remark = input('post.remark', '');
+            $params = $this->request->param();
+            $log_id = intval($params['log_id'] ?? 0);
+            $change_money = floatval($params['change_money'] ?? 0);
+            $remark = $params['remark'] ?? '';
             
             if (empty($log_id)) {
                 return json(['code' => 0, 'msg' => '请选择要修改的记录']);
