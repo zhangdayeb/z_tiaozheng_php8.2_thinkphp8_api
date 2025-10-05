@@ -4,6 +4,8 @@ namespace app\controller;
 
 use app\controller\common\LogHelper;
 use app\BaseController;
+use app\model\HomeTokenModel;
+use app\model\UserModel;
 
 
 class Base extends BaseController

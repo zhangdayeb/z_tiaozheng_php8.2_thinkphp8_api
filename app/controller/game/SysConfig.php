@@ -14,14 +14,7 @@ class SysConfig extends Base
     public function get_all_config()
     {
         try {
-            // 不需要验证登录，公开接口
-            // 如果需要登录验证，可以取消下面的注释
-            /*
-            if (empty(self::$user)) {
-                return json(['code' => 0, 'msg' => '请先登录']);
-            }
-            */
-            
+           
             // 查询所有系统配置
             $configs = Db::name('common_sys_config')
                 ->field('id, name, value, remark')
@@ -46,10 +39,7 @@ class SysConfig extends Base
             return json([
                 'code' => 1,
                 'msg' => '获取成功',
-                'data' => [
-                    'configs' => $configMap,  // 键值对格式
-                    'list' => $configs        // 列表格式
-                ]
+                'data' => $configMap
             ]);
             
         } catch (\Exception $e) {
