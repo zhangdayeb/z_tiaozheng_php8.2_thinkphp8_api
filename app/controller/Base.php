@@ -22,7 +22,6 @@ class Base extends BaseController
     {
         try {
             $token = $this->request->header('x-csrf-token');
-            if (empty($token)) $token = $this->request->post('token');
             
             if (empty($token)) {
                 LogHelper::error('Token不存在');
