@@ -2,19 +2,18 @@
 namespace app\controller\game;
 
 use app\controller\common\LogHelper;
-use app\controller\Base;
+use app\BaseController;
 use think\facade\Db;
 
-class SysConfig extends Base
+class SysConfig extends BaseController
 {
     /**
      * 获取所有系统配置
-     * 返回配置列表供前端使用
+     * 不需要认证，公开接口
      */
     public function get_all_config()
     {
         try {
-           
             // 查询所有系统配置
             $configs = Db::name('common_sys_config')
                 ->field('id, name, value, remark')
@@ -30,10 +29,9 @@ class SysConfig extends Base
                 ];
             }
             
-            // 记录日志
+            // 记录日志（调试级别）
             LogHelper::debug('获取系统配置', [
-                'config_count' => count($configs),
-                'user_id' => self::$user['id'] ?? 0
+                'config_count' => count($configs)
             ]);
             
             return json([
@@ -43,7 +41,11 @@ class SysConfig extends Base
             ]);
             
         } catch (\Exception $e) {
-            LogHelper::error('获取系统配置异常', ['error' => $e->getMessage()]);
+            LogHelper::error('获取系统配置异常：' . $e->getMessage(), [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
             return json([
                 'code' => 0, 
                 'msg' => '获取配置失败',
@@ -51,6 +53,4 @@ class SysConfig extends Base
             ]);
         }
     }
-    
-
 }

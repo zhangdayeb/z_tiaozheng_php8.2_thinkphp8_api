@@ -18,7 +18,7 @@ class Login extends BaseController
                 return json(['code' => 0, 'msg' => '用户名或密码不能为空']);
             }
             
-            // 查询用户
+            // 查询用户（注意pwd字段）
             $user = Db::name('common_user')
                 ->where('username', $username)
                 ->where('pwd', $password)
@@ -37,15 +37,24 @@ class Login extends BaseController
             // 生成token
             $token = md5($username . time() . rand(1000, 9999));
             
-            // 保存token
-            Db::name('common_home_token')->insert([
+            // 获取客户端IP
+            $ip = $this->request->ip();
+            
+            // 保存token到数据库
+            $tokenData = [
                 'token' => $token,
                 'user_id' => $user['id'],
                 'create_time' => date('Y-m-d H:i:s'),
-                'ip' => $this->request->ip()
-            ]);
+                'ip' => $ip
+            ];
             
-            LogHelper::info('登录成功', ['username' => $username, 'user_id' => $user['id']]);
+            Db::name('common_home_token')->insert($tokenData);
+            
+            LogHelper::info('登录成功', [
+                'username' => $username, 
+                'user_id' => $user['id'],
+                'ip' => $ip
+            ]);
             
             return json([
                 'code' => 1,
@@ -58,8 +67,12 @@ class Login extends BaseController
             ]);
             
         } catch (\Exception $e) {
-            LogHelper::error('登录异常', $e);
-            return json(['code' => 0, 'msg' => '系统异常']);
+            LogHelper::error('登录异常：' . $e->getMessage(), [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            return json(['code' => 0, 'msg' => '系统异常，请稍后重试']);
         }
     }
 }
