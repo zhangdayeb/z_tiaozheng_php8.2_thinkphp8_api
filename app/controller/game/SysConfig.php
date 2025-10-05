@@ -5,7 +5,7 @@ use app\controller\common\LogHelper;
 use app\controller\Base;
 use think\facade\Db;
 
-class SysConfi extends Base
+class SysConfig extends Base
 {
     /**
      * 获取所有系统配置
