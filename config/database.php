@@ -59,25 +59,33 @@ return [
         ],
 
         // 添加远程数据库配置 - zonghepan
+        // 适配 ZONGHEPAN_ 前缀的环境变量
         'zonghepan' => [
             // 数据库类型
-            'type'            => env('zonghepan.type', 'mysql'),
+            'type'            => env('zonghepan.zonghepan_type', 'mysql'),
             // 服务器地址
-            'hostname'        => env('zonghepan.hostname', '54.169.148.211'),
+            'hostname'        => env('zonghepan.zonghepan_hostname', '54.169.148.211'),
             // 数据库名
-            'database'        => env('zonghepan.database', 'ntp_zonghe'),
+            'database'        => env('zonghepan.zonghepan_database', 'ntp_zonghe'),
             // 用户名
-            'username'        => env('zonghepan.username', 'ntp_zonghe'),
-            // 密码
-            'password'        => env('zonghepan.password', ''),
+            'username'        => env('zonghepan.zonghepan_username', 'ntp_zonghe'),
+            // 密码 - 关键配置
+            'password'        => env('zonghepan.zonghepan_password', ''),
             // 端口
-            'hostport'        => env('zonghepan.hostport', '3306'),
+            'hostport'        => env('zonghepan.zonghepan_hostport', '3306'),
             // 数据库连接参数
-            'params'          => [],
-            // 数据库编码默认采用utf8
-            'charset'         => env('zonghepan.charset', 'utf8'),
+            'params'          => [
+                // 长连接
+                \PDO::ATTR_PERSISTENT => false,
+                // 错误模式
+                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+                // 超时设置
+                \PDO::ATTR_TIMEOUT => 30,
+            ],
+            // 数据库编码默认采用utf8mb4（支持emoji）
+            'charset'         => env('zonghepan.zonghepan_charset', 'utf8mb4'),
             // 数据库表前缀
-            'prefix'          => env('zonghepan.prefix', 'ntp_'),
+            'prefix'          => env('zonghepan.zonghepan_prefix', 'ntp_'),
 
             // 数据库部署方式:0 集中式(单一服务器),1 分布式(主从服务器)
             'deploy'          => 0,
@@ -89,8 +97,8 @@ return [
             'slave_no'        => '',
             // 是否严格检查字段是否存在
             'fields_strict'   => true,
-            // 是否需要断线重连
-            'break_reconnect' => true,  // 远程连接建议开启断线重连
+            // 是否需要断线重连 - 远程连接建议开启
+            'break_reconnect' => true,
             // 监听SQL
             'trigger_sql'     => env('app_debug', true),
             // 开启字段缓存
